@@ -12,9 +12,9 @@ public class MyDataBaseManager {
         if (connection == null) {
             try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
-                String urlDatabase = "jdbc:mysql://localhost:3306/databasename"; //Change database name
+                String urlDatabase = "jdbc:mysql://localhost:3306/databasename"; // Change database name
                 String usernameDatabase = "username"; //Change user name
-                String passwordDatabase = "password"; //Change user password
+                String passwordDatabase = "password"; // Change user password
                 connection = DriverManager.getConnection(urlDatabase, usernameDatabase, passwordDatabase);
             } catch (ClassNotFoundException | SQLException ex) {
                 Logger.getLogger(MyDataBaseManager.class.getName()).log(Level.SEVERE, "Error establishing connection", ex);
