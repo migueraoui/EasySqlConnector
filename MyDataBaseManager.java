@@ -36,10 +36,14 @@ public class MyDataBaseManager {
         return resultSet;
     }
 
-    public static int updateMyQuery(String query) {
+    public static int updateMyQuery(String query, Object... params) {
         int rows = -1;
         try {
             PreparedStatement preparedStatement = getMyConnection().prepareStatement(query);
+          
+            for (int i = 0; i < params.length; i++) {
+                preparedStatement.setObject(i + 1, params[i]);
+            }
             rows = preparedStatement.executeUpdate();
         } catch (SQLException ex) {
             Logger.getLogger(MyDataBaseManager.class.getName()).log(Level.SEVERE, "Error executing update", ex);
