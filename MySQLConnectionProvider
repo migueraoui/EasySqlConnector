@@ -9,5 +9,16 @@ public class MySQLConnectionProvider implements ConnectionProvider {
     private final String username;
     private final String password;
 
+    public MySQLConnectionProvider(String url, String username, String password) {
+        this.url = url;
+        this.username = username;
+        this.password = password;
+    }
+
+    @Override
+    public Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(url, username, password);
+    }
+
     
 }
