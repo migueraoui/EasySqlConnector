@@ -1,79 +1,42 @@
 package easysqlconnector;
+
 import java.sql.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class MyDataBaseManager {
-    private static Connection connection;
+public class DatabaseManager {
+    private static final Logger LOGGER = Logger.getLogger(DatabaseManager.class.getName());
+    private final ConnectionProvider connectionProvider;
 
-    private MyDataBaseManager() {}
-
-    public static Connection getMyConnection() {
-        if (connection == null) {
-            try {
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                String urlDatabase = "jdbc:mysql://localhost:3306/databasename"; // Change database name
-                String usernameDatabase = "username"; //Change user name
-                String passwordDatabase = "password"; // Change user password
-                connection = DriverManager.getConnection(urlDatabase, usernameDatabase, passwordDatabase);
-            } catch (ClassNotFoundException | SQLException ex) {
-                Logger.getLogger(MyDataBaseManager.class.getName()).log(Level.SEVERE, "Error establishing connection", ex);
-            }
-        }
-        return connection;
-    }
-
-    public static ResultSet executeMyQuery(String query) {
-        ResultSet resultSet = null;
-        try {
-            Statement statement = getMyConnection().createStatement();
-            resultSet = statement.executeQuery(query);
-        } catch (SQLException ex) {
-            Logger.getLogger(MyDataBaseManager.class.getName()).log(Level.SEVERE, "Error executing query", ex);
-        } finally {
-            closeConnection();
-        }
-        return resultSet;
-    }
-
-    public static int updateMyQuery(String query, Object... params) {
-        int rows = -1;
-        try {
-            PreparedStatement preparedStatement = getMyConnection().prepareStatement(query);
-          
-            for (int i = 0; i < params.length; i++) {
-                preparedStatement.setObject(i + 1, params[i]);
-            }
-            rows = preparedStatement.executeUpdate();
-        } catch (SQLException ex) {
-            Logger.getLogger(MyDataBaseManager.class.getName()).log(Level.SEVERE, "Error executing update", ex);
-        } finally {
-            closeConnection();
-        }
-        return rows;
+    public DatabaseManager(ConnectionProvider connectionProvider) {
+        this.connectionProvider = connectionProvider;
     }
     
-    public static ResultSet searchMyRecords(String searchQuery) {
-        ResultSet resultSet = null;
-        try {
-            PreparedStatement preparedStatement = getMyConnection().prepareStatement(searchQuery);
-            resultSet = preparedStatement.executeQuery();
+    public ResultSet executeQuery(String query) {
+        try (Connection connection = connectionProvider.getConnection();
+             Statement statement = connection.createStatement()) {
+            return statement.executeQuery(query);
         } catch (SQLException ex) {
-            Logger.getLogger(MyDataBaseManager.class.getName()).log(Level.SEVERE, "Error searching records", ex);
+            LOGGER.log(Level.SEVERE, "Error executing query: " + query, ex);
+            return null;
         }
-        return resultSet;
+    }
+    
+    public int executeUpdate(String query, Object... params) {
+        try (Connection connection = connectionProvider.getConnection();
+             PreparedStatement preparedStatement = prepareStatement(connection, query, params)) {
+            return preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error executing update: " + query, ex);
+            return -1;
+        }
     }
 
-
-    private static void closeConnection() {
-        if (connection != null) {
-            try {
-                connection.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(MyDataBaseManager.class.getName()).log(Level.SEVERE, "Error closing connection", ex);
-            } finally {
-                connection = null; // Reset the connection reference
-            }
+    private PreparedStatement prepareStatement(Connection connection, String query, Object... params) throws SQLException {
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
+        for (int i = 0; i < params.length; i++) {
+            preparedStatement.setObject(i + 1, params[i]);
         }
+        return preparedStatement;
     }
 }
